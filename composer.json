@@ -1,0 +1,17 @@
+{
+    "name": "morningtrain/wp-async",
+    "description": "Create Async task for WP",
+    "minimum-stability": "dev",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Martin Schadegg Brønniche",
+            "email": "ms@morningtrain.dk"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Morningtrain\\WP\\Async\\": "src/"
+        }
+    }
+}
