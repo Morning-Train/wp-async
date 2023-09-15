@@ -2,6 +2,7 @@
 
 use Morningtrain\WP\Core\Abstracts\AbstractSingleton;
 use Morningtrain\WP\Async\Abstracts\AbstractAsyncTask;
+use Throwable;
 use WP_REST_Request;
 use WP_Error;
 
@@ -145,13 +146,22 @@ class Worker {
 
     protected static function runTask(?string $class , array $data = []) :void
     {
-        if(!method_exists($class, 'getCallback')) {
-            wp_send_json_error(new WP_Error('invalid_callback', __('Invalid callback', 'wp-async')));
+        try {
+            if(!method_exists($class, 'getCallback')) {
+                wp_send_json_error(new WP_Error('invalid_callback', __('Invalid callback', 'wp-async')), 400);
+            }
+
+            $result = call_user_func_array($class::getCallback(), $data);
+
+            if (is_wp_error($result)) {
+                wp_send_json_error($result, 400);
+                exit;
+            }
+
+            wp_send_json_success($result);
+        } catch (Throwable $exception) {
+            wp_send_json_error($exception->getMessage(), 500);
         }
-
-        $result = call_user_func_array($class::getCallback(), $data);
-
-        wp_send_json_success($result);
     }
 
 }
