@@ -75,7 +75,9 @@ This will run the task in a new thread, and wait for response.
 TestTask::dispatchBlocking('arg1', 'arg2');
 ```
 
-there will be a timout after 5 seconds on blocking task. 
+#### Timeout
+
+There will be a timout after 5 seconds on blocking task. 
 If you need more time to handle your blocking task, you should overwrite the `dispatchBlocking` method on your task class.
 You can call the `dispatchBlockingTask` method on the worker with timeout in second as third parameter.
 
@@ -83,6 +85,68 @@ You can call the `dispatchBlockingTask` method on the worker with timeout in sec
 public static function dispatchBlocking(mixed ...$params) :array|WP_Error
 {
     return static::getWorker()->dispatchBlockingTask(static::getCallback(), $params, 30);
+}
+```
+
+#### Error handling
+
+You can return a `WP_Error` object from your task, and it will be returned as status 400 with the wp error info.
+
+```php
+use Morningtrain\WP\Async\Abstracts\AbstractAsyncTask;
+
+class TestTask extends AbstractAsyncTask {
+    public static function handle($arg1, $arg2) {
+        // Do something;
+        
+        $somethingWentWrong = true;
+        
+        if ($somethingWentWrong) {
+            return new \WP_Error('something_went_wrong', 'Something went wrong');
+        }
+        
+        return "$arg1 $arg2";
+    }
+}
+```
+
+You can also throw a Throwable (Exception), and it will be returned as status 500 with the exception message.
+
+```php
+use Morningtrain\WP\Async\Abstracts\AbstractAsyncTask;
+use Exception;
+
+class TestTask extends AbstractAsyncTask {
+    public static function handle($arg1, $arg2) {
+        // Do something;
+        
+        $somethingWentWrong = true;
+        
+        if ($somethingWentWrong) {
+            throw new Exception('Something went wrong');
+        }
+        
+        return "$arg1 $arg2";
+    }
+}
+```
+
+Alternatively you can return your own json response, if you need another response code.
+
+```php
+use Morningtrain\WP\Async\Abstracts\AbstractAsyncTask;
+
+class TestTask extends AbstractAsyncTask {
+    public static function handle($arg1, $arg2) {        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('You are not allowed to do this!', 401);
+            exit;
+        }
+        
+        // Do something;
+        
+        return "$arg1 $arg2";
+    }
 }
 ```
 
