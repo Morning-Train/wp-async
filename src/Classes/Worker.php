@@ -151,6 +151,11 @@ class Worker {
 
         $result = call_user_func_array($class::getCallback(), $data);
 
+        if (is_wp_error($result)) {
+            wp_send_json_error($result);
+            exit;
+        }
+
         wp_send_json_success($result);
     }
 
